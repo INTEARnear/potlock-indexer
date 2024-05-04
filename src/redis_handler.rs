@@ -32,9 +32,12 @@ impl<C: AsyncCommands + Sync> PotlockEventHandler for PushToRedisStream<C> {
             .xadd_maxlen(
                 "potlock_pot_project_donation",
                 StreamMaxlen::Approx(self.max_stream_size),
-                "*",
+                format!("{}-*", context.block_height),
                 &[
-                    ("event", serde_json::to_string(&event).unwrap()),
+                    (
+                        "pot_project_donation",
+                        serde_json::to_string(&event).unwrap(),
+                    ),
                     ("context", serde_json::to_string(&context).unwrap()),
                 ],
             )
@@ -50,9 +53,9 @@ impl<C: AsyncCommands + Sync> PotlockEventHandler for PushToRedisStream<C> {
             .xadd_maxlen(
                 "potlock_pot_donation",
                 StreamMaxlen::Approx(self.max_stream_size),
-                "*",
+                format!("{}-*", context.block_height),
                 &[
-                    ("event", serde_json::to_string(&event).unwrap()),
+                    ("pot_donation", serde_json::to_string(&event).unwrap()),
                     ("context", serde_json::to_string(&context).unwrap()),
                 ],
             )
@@ -68,9 +71,9 @@ impl<C: AsyncCommands + Sync> PotlockEventHandler for PushToRedisStream<C> {
             .xadd_maxlen(
                 "potlock_donation",
                 StreamMaxlen::Approx(self.max_stream_size),
-                "*",
+                format!("{}-*", context.block_height),
                 &[
-                    ("event", serde_json::to_string(&event).unwrap()),
+                    ("donation", serde_json::to_string(&event).unwrap()),
                     ("context", serde_json::to_string(&context).unwrap()),
                 ],
             )
