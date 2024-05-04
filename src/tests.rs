@@ -89,7 +89,7 @@ async fn detects_pot_project_donations() {
                 receipt_id: "DT7KfdougMFLjmNorQH9difBWRbnKzo9q1nL5oTDaFpS"
                     .parse()
                     .unwrap(),
-                block_height: 118091725
+                block_height: 118091729
             }
         )]
     );
@@ -160,7 +160,7 @@ async fn detects_pot_donations() {
             EventContext {
                 transaction_id: "mGdDKMFHj7omhumVA8exQEvSZSjZNCDud7eBprVR87c".parse().unwrap(),
                 receipt_id: "3CatRDqy1ZbL3Uo3p1GwVch4STyCooHNGUzzSLH9dQCa".parse().unwrap(),
-                block_height: 118159853
+                block_height: 118159854
             }
         )]
     );

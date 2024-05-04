@@ -13,7 +13,7 @@ use inindexer::near_indexer_primitives::CryptoHash;
 use inindexer::near_indexer_primitives::StreamerMessage;
 use inindexer::near_utils::dec_format;
 use inindexer::near_utils::EventLogData;
-use inindexer::CompleteTransaction;
+use inindexer::{CompleteTransaction, IncompleteTransaction};
 use inindexer::Indexer;
 use inindexer::TransactionReceipt;
 use serde::Deserialize;
@@ -43,7 +43,7 @@ impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
     async fn on_transaction(
         &mut self,
         tx: &CompleteTransaction,
-        _block: &StreamerMessage,
+        block: &StreamerMessage,
     ) -> Result<(), Self::Error> {
         for receipt in tx.receipts.iter() {
             if let ReceiptEnumView::Action { actions, .. } = &receipt.receipt.receipt.receipt {
@@ -64,7 +64,7 @@ impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
                                     let context = EventContext {
                                         transaction_id: tx.transaction.transaction.hash,
                                         receipt_id: receipt.receipt.receipt.receipt_id,
-                                        block_height: receipt.block_height,
+                                        block_height: block.block.header.height,
                                     };
                                     if let Some(project_id) = donation.project_id {
                                         let event = PotProjectDonationEvent {
@@ -118,37 +118,46 @@ impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
                     }
                 }
             }
+        }
 
-            if receipt.receipt.receipt.receiver_id == "donate.potlock.near" {
-                for log in receipt.receipt.execution_outcome.outcome.logs.iter() {
-                    if let Ok(log) = EventLogData::<Vec<DonationLogWrapper>>::deserialize(log) {
-                        if log.event == "donation" && log.standard == "potlock" {
-                            for donation in log.data {
-                                let donation = donation.donation;
-                                let event = DonationEvent {
-                                    donation_id: donation.id,
-                                    donor_id: donation.donor_id,
-                                    total_amount: donation.total_amount,
-                                    message: donation.message.and_then(|msg| {
-                                        if msg.is_empty() {
-                                            None
-                                        } else {
-                                            Some(msg)
-                                        }
-                                    }),
-                                    donated_at: donation.donated_at_ms,
-                                    project_id: donation.recipient_id,
-                                    protocol_fee: donation.protocol_fee,
-                                    referrer_id: donation.referrer_id,
-                                    referrer_fee: donation.referrer_fee,
-                                };
-                                let context = EventContext {
-                                    transaction_id: tx.transaction.transaction.hash,
-                                    receipt_id: receipt.receipt.receipt.receipt_id,
-                                    block_height: receipt.block_height,
-                                };
-                                self.0.handle_donation(event, context).await;
-                            }
+        Ok(())
+    }
+
+    async fn on_receipt(
+        &mut self,
+        receipt: &TransactionReceipt,
+        tx: &IncompleteTransaction,
+        _block: &StreamerMessage,
+    ) -> Result<(), Self::Error> {
+        if receipt.receipt.receipt.receiver_id == "donate.potlock.near" {
+            for log in receipt.receipt.execution_outcome.outcome.logs.iter() {
+                if let Ok(log) = EventLogData::<Vec<DonationLogWrapper>>::deserialize(log) {
+                    if log.event == "donation" && log.standard == "potlock" {
+                        for donation in log.data {
+                            let donation = donation.donation;
+                            let event = DonationEvent {
+                                donation_id: donation.id,
+                                donor_id: donation.donor_id,
+                                total_amount: donation.total_amount,
+                                message: donation.message.and_then(|msg| {
+                                    if msg.is_empty() {
+                                        None
+                                    } else {
+                                        Some(msg)
+                                    }
+                                }),
+                                donated_at: donation.donated_at_ms,
+                                project_id: donation.recipient_id,
+                                protocol_fee: donation.protocol_fee,
+                                referrer_id: donation.referrer_id,
+                                referrer_fee: donation.referrer_fee,
+                            };
+                            let context = EventContext {
+                                transaction_id: tx.transaction.transaction.hash,
+                                receipt_id: receipt.receipt.receipt.receipt_id,
+                                block_height: receipt.block_height,
+                            };
+                            self.0.handle_donation(event, context).await;
                         }
                     }
                 }
@@ -323,6 +332,8 @@ pub struct PotDonationEvent {
 pub struct EventContext {
     pub transaction_id: CryptoHash,
     pub receipt_id: CryptoHash,
+    /// In the event of pot or pot project donation, represents the block when the
+    /// transaction was completed, not the donation receipt
     pub block_height: u64,
 }
 
