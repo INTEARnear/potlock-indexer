@@ -13,9 +13,9 @@ use inindexer::near_indexer_primitives::CryptoHash;
 use inindexer::near_indexer_primitives::StreamerMessage;
 use inindexer::near_utils::dec_format;
 use inindexer::near_utils::EventLogData;
-use inindexer::{CompleteTransaction, IncompleteTransaction};
 use inindexer::Indexer;
 use inindexer::TransactionReceipt;
+use inindexer::{CompleteTransaction, IncompleteTransaction};
 use serde::Deserialize;
 use serde::Serialize;
 
