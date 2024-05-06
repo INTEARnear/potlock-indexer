@@ -6,6 +6,7 @@ mod tests;
 use async_trait::async_trait;
 use inindexer::near_indexer_primitives::types::AccountId;
 use inindexer::near_indexer_primitives::types::Balance;
+use inindexer::near_indexer_primitives::types::BlockHeight;
 use inindexer::near_indexer_primitives::views::ActionView;
 use inindexer::near_indexer_primitives::views::ExecutionStatusView;
 use inindexer::near_indexer_primitives::views::ReceiptEnumView;
@@ -65,6 +66,11 @@ impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
                                         transaction_id: tx.transaction.transaction.hash,
                                         receipt_id: receipt.receipt.receipt.receipt_id,
                                         block_height: block.block.header.height,
+                                        block_timestamp_nanosec: block
+                                            .block
+                                            .header
+                                            .timestamp_nanosec
+                                            as u128,
                                     };
                                     if let Some(project_id) = donation.project_id {
                                         let event = PotProjectDonationEvent {
@@ -156,6 +162,7 @@ impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
                                 transaction_id: tx.transaction.transaction.hash,
                                 receipt_id: receipt.receipt.receipt.receipt_id,
                                 block_height: receipt.block_height,
+                                block_timestamp_nanosec: receipt.block_timestamp_nanosec,
                             };
                             self.0.handle_donation(event, context).await;
                         }
@@ -334,7 +341,9 @@ pub struct EventContext {
     pub receipt_id: CryptoHash,
     /// In the event of pot or pot project donation, represents the block when the
     /// transaction was completed, not the donation receipt
-    pub block_height: u64,
+    pub block_height: BlockHeight,
+    #[serde(with = "dec_format")]
+    pub block_timestamp_nanosec: u128,
 }
 
 fn get_result<'a>(
