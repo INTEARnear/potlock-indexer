@@ -225,6 +225,7 @@ async fn detects_direct_donations() {
                 donation_id: 2211,
                 donor_id: "xslymn.near".parse().unwrap(),
                 total_amount: 500000000000000000000000,
+                ft_id: "near".parse().unwrap(),
                 message: None,
                 donated_at: 1714665141842,
                 project_id: "indexers.intear.near".parse().unwrap(),

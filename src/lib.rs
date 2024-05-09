@@ -145,6 +145,7 @@ impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
                                 donation_id: donation.id,
                                 donor_id: donation.donor_id,
                                 total_amount: donation.total_amount,
+                                ft_id: donation.ft_id,
                                 message: donation.message.and_then(|msg| {
                                     if msg.is_empty() {
                                         None
@@ -253,6 +254,8 @@ pub struct DonationEvent {
     /// Amount donated
     #[serde(with = "dec_format")]
     pub total_amount: Balance,
+    /// FT id (e.g. "near")
+    pub ft_id: AccountId,
     /// Optional message from the donor
     pub message: Option<String>,
     /// Timestamp when the donation was made
