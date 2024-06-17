@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use inindexer::{
-    neardata_server::NeardataServerProvider, near_indexer_primitives::types::AccountId,
+    near_indexer_primitives::types::AccountId, neardata_server::NeardataServerProvider,
     run_indexer, BlockIterator, IndexerOptions, PreprocessTransactionsSettings,
 };
 

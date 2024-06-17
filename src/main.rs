@@ -21,7 +21,8 @@ async fn main() {
     .unwrap();
     let connection = ConnectionManager::new(client).await.unwrap();
 
-    let mut indexer = potlock_indexer::PotlockIndexer(PushToRedisStream::new(connection, 1_000).await);
+    let mut indexer =
+        potlock_indexer::PotlockIndexer(PushToRedisStream::new(connection, 1_000).await);
 
     run_indexer(
         &mut indexer,
