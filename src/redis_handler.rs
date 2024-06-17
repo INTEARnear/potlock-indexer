@@ -1,84 +1,113 @@
 use async_trait::async_trait;
-use redis::{streams::StreamMaxlen, AsyncCommands};
+use chrono::DateTime;
+use inevents_redis::RedisEventStream;
+use intear_events::events::potlock::{potlock_donation::PotlockDonationEventData, potlock_pot_donation::PotlockPotDonationEventData, potlock_pot_project_donation::PotlockPotProjectDonationEventData};
+use redis::aio::ConnectionManager;
 
 use crate::{
     DonationEvent, EventContext, PotDonationEvent, PotProjectDonationEvent, PotlockEventHandler,
 };
 
-pub struct PushToRedisStream<C: AsyncCommands + Sync> {
-    connection: C,
+pub struct PushToRedisStream {
+    donation_stream: RedisEventStream<PotlockDonationEventData>,
+    pot_project_donation_stream: RedisEventStream<PotlockPotProjectDonationEventData>,
+    pot_donation_stream: RedisEventStream<PotlockPotDonationEventData>,
     max_stream_size: usize,
 }
 
-impl<C: AsyncCommands + Sync> PushToRedisStream<C> {
-    pub fn new(connection: C, max_stream_size: usize) -> Self {
+impl PushToRedisStream {
+    pub async fn new(connection: ConnectionManager, max_stream_size: usize) -> Self {
         Self {
-            connection,
+            donation_stream: RedisEventStream::new(connection.clone(), "potlock_donation").await,
+            pot_project_donation_stream: RedisEventStream::new(
+                connection.clone(),
+                "potlock_pot_project_donation",
+            )
+            .await,
+            pot_donation_stream: RedisEventStream::new(connection.clone(), "potlock_pot_donation")
+                .await,
             max_stream_size,
         }
     }
 }
 
 #[async_trait]
-impl<C: AsyncCommands + Sync> PotlockEventHandler for PushToRedisStream<C> {
+impl PotlockEventHandler for PushToRedisStream {
+    async fn handle_donation(&mut self, event: DonationEvent, context: EventContext) {
+        self.donation_stream
+            .emit_event(context.block_height, PotlockDonationEventData {
+                donation_id: event.donation_id,
+                donor_id: event.donor_id,
+                total_amount: event.total_amount,
+                ft_id: event.ft_id,
+                message: event.message,
+                donated_at: DateTime::from_timestamp_millis(event.donated_at as i64).unwrap(),
+                project_id: event.project_id,
+                protocol_fee: event.protocol_fee,
+                referrer_id: event.referrer_id,
+                referrer_fee: event.referrer_fee,
+
+                transaction_id: context.transaction_id,
+                receipt_id: context.receipt_id,
+                block_height: context.block_height,
+                block_timestamp_nanosec: context.block_timestamp_nanosec,
+            }, self.max_stream_size)
+            .await
+            .expect("Failed to emit donation event");
+    }
+
     async fn handle_pot_project_donation(
         &mut self,
         event: PotProjectDonationEvent,
         context: EventContext,
     ) {
-        log::debug!("Pot project donation: {event:?}, context {context:?}");
-        let response: String = self
-            .connection
-            .xadd_maxlen(
-                "potlock_pot_project_donation",
-                StreamMaxlen::Approx(self.max_stream_size),
-                format!("{}-*", context.block_height),
-                &[
-                    (
-                        "pot_project_donation",
-                        serde_json::to_string(&event).unwrap(),
-                    ),
-                    ("context", serde_json::to_string(&context).unwrap()),
-                ],
-            )
+        self.pot_project_donation_stream
+            .emit_event(context.block_height, PotlockPotProjectDonationEventData {
+                donation_id: event.donation_id,
+                pot_id: event.pot_id,
+                donor_id: event.donor_id,
+                total_amount: event.total_amount,
+                net_amount: event.net_amount,
+                message: event.message,
+                donated_at: DateTime::from_timestamp_millis(event.donated_at as i64).unwrap(),
+                project_id: event.project_id,
+                protocol_fee: event.protocol_fee,
+                referrer_id: event.referrer_id,
+                referrer_fee: event.referrer_fee,
+                chef_id: event.chef_id,
+                chef_fee: event.chef_fee,
+
+                transaction_id: context.transaction_id,
+                receipt_id: context.receipt_id,
+                block_height: context.block_height,
+                block_timestamp_nanosec: context.block_timestamp_nanosec,
+            }, self.max_stream_size)
             .await
-            .unwrap();
-        log::debug!("Adding to stream: {response}");
+            .expect("Failed to emit pot project donation event");
     }
 
     async fn handle_pot_donation(&mut self, event: PotDonationEvent, context: EventContext) {
-        log::debug!("Pot donation: {event:?}, context {context:?}");
-        let response: String = self
-            .connection
-            .xadd_maxlen(
-                "potlock_pot_donation",
-                StreamMaxlen::Approx(self.max_stream_size),
-                format!("{}-*", context.block_height),
-                &[
-                    ("pot_donation", serde_json::to_string(&event).unwrap()),
-                    ("context", serde_json::to_string(&context).unwrap()),
-                ],
-            )
-            .await
-            .unwrap();
-        log::debug!("Adding to stream: {response}");
-    }
+        self.pot_donation_stream
+            .emit_event(context.block_height, PotlockPotDonationEventData {
+                donation_id: event.donation_id,
+                pot_id: event.pot_id,
+                donor_id: event.donor_id,
+                total_amount: event.total_amount,
+                net_amount: event.net_amount,
+                message: event.message,
+                donated_at: DateTime::from_timestamp_millis(event.donated_at as i64).unwrap(),
+                protocol_fee: event.protocol_fee,
+                referrer_id: event.referrer_id,
+                referrer_fee: event.referrer_fee,
+                chef_id: event.chef_id,
+                chef_fee: event.chef_fee,
 
-    async fn handle_donation(&mut self, event: DonationEvent, context: EventContext) {
-        log::debug!("Donation: {event:?}, context {context:?}");
-        let response: String = self
-            .connection
-            .xadd_maxlen(
-                "potlock_donation",
-                StreamMaxlen::Approx(self.max_stream_size),
-                format!("{}-*", context.block_height),
-                &[
-                    ("donation", serde_json::to_string(&event).unwrap()),
-                    ("context", serde_json::to_string(&context).unwrap()),
-                ],
-            )
+                transaction_id: context.transaction_id,
+                receipt_id: context.receipt_id,
+                block_height: context.block_height,
+                block_timestamp_nanosec: context.block_timestamp_nanosec,
+            }, self.max_stream_size)
             .await
-            .unwrap();
-        log::debug!("Adding to stream: {response}");
+            .expect("Failed to emit pot donation event");
     }
 }

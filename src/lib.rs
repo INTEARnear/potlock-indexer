@@ -1,4 +1,3 @@
-#[cfg(feature = "redis-handler")]
 pub mod redis_handler;
 #[cfg(test)]
 mod tests;
@@ -18,7 +17,6 @@ use inindexer::Indexer;
 use inindexer::TransactionReceipt;
 use inindexer::{CompleteTransaction, IncompleteTransaction};
 use serde::Deserialize;
-use serde::Serialize;
 
 pub type DonationId = u64;
 pub type ProjectId = AccountId;
@@ -245,14 +243,13 @@ pub struct PotDonationExternal {
     pub chef_fee: Option<u128>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DonationEvent {
     /// ID of the donation
     pub donation_id: DonationId,
     /// ID of the donor
     pub donor_id: AccountId,
     /// Amount donated
-    #[serde(with = "dec_format")]
     pub total_amount: Balance,
     /// FT id (e.g. "near")
     pub ft_id: AccountId,
@@ -263,16 +260,14 @@ pub struct DonationEvent {
     /// ID of the project receiving the donation
     pub project_id: AccountId,
     /// Protocol fee
-    #[serde(with = "dec_format")]
     pub protocol_fee: Balance,
     /// Referrer ID
     pub referrer_id: Option<AccountId>,
     /// Referrer fee
-    #[serde(with = "dec_format")]
     pub referrer_fee: Option<Balance>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PotProjectDonationEvent {
     /// ID of the donation
     pub donation_id: DonationId,
@@ -281,10 +276,8 @@ pub struct PotProjectDonationEvent {
     /// ID of the donor
     pub donor_id: AccountId,
     /// Amount donated
-    #[serde(with = "dec_format")]
     pub total_amount: Balance,
     /// Amount after all fees/expenses (incl. storage)
-    #[serde(with = "dec_format")]
     pub net_amount: Balance,
     /// Optional message from the donor
     pub message: Option<String>,
@@ -295,19 +288,16 @@ pub struct PotProjectDonationEvent {
     /// Referrer ID
     pub referrer_id: Option<AccountId>,
     /// Referrer fee
-    #[serde(with = "dec_format")]
     pub referrer_fee: Option<Balance>,
     /// Protocol fee
-    #[serde(with = "dec_format")]
     pub protocol_fee: Balance,
     /// Chef ID
     pub chef_id: Option<AccountId>,
     /// Chef fee
-    #[serde(with = "dec_format")]
     pub chef_fee: Option<Balance>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PotDonationEvent {
     /// ID of the donation
     pub donation_id: DonationId,
@@ -318,7 +308,6 @@ pub struct PotDonationEvent {
     /// Amount donated
     pub total_amount: Balance,
     /// Amount after all fees/expenses (incl. storage)
-    #[serde(with = "dec_format")]
     pub net_amount: Balance,
     /// Optional message from the donor
     pub message: Option<String>,
@@ -327,25 +316,22 @@ pub struct PotDonationEvent {
     /// Referrer ID
     pub referrer_id: Option<AccountId>,
     /// Referrer fee
-    #[serde(with = "dec_format")]
     pub referrer_fee: Option<Balance>,
     /// Protocol fee
     pub protocol_fee: Balance,
     /// Chef ID
     pub chef_id: Option<AccountId>,
     /// Chef fee
-    #[serde(with = "dec_format")]
     pub chef_fee: Option<Balance>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EventContext {
     pub transaction_id: CryptoHash,
     pub receipt_id: CryptoHash,
     /// In the event of pot or pot project donation, represents the block when the
     /// transaction was completed, not the donation receipt
     pub block_height: BlockHeight,
-    #[serde(with = "dec_format")]
     pub block_timestamp_nanosec: u128,
 }
 

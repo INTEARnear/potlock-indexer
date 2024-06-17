@@ -1,4 +1,4 @@
-use inindexer::fastnear_data_server::FastNearDataServerProvider;
+use inindexer::neardata_server::NeardataServerProvider;
 
 use inindexer::{
     run_indexer, AutoContinue, BlockIterator, IndexerOptions, PreprocessTransactionsSettings,
@@ -21,11 +21,11 @@ async fn main() {
     .unwrap();
     let connection = ConnectionManager::new(client).await.unwrap();
 
-    let mut indexer = potlock_indexer::PotlockIndexer(PushToRedisStream::new(connection, 1_000));
+    let mut indexer = potlock_indexer::PotlockIndexer(PushToRedisStream::new(connection, 1_000).await);
 
     run_indexer(
         &mut indexer,
-        FastNearDataServerProvider::mainnet(),
+        NeardataServerProvider::mainnet(),
         IndexerOptions {
             range: if std::env::args().len() > 1 {
                 // For debugging

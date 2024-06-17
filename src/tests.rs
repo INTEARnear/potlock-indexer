@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use inindexer::{
-    fastnear_data_server::FastNearDataServerProvider, near_indexer_primitives::types::AccountId,
+    neardata_server::NeardataServerProvider, near_indexer_primitives::types::AccountId,
     run_indexer, BlockIterator, IndexerOptions, PreprocessTransactionsSettings,
 };
 
@@ -43,7 +43,7 @@ async fn detects_pot_project_donations() {
 
     run_indexer(
         &mut indexer,
-        FastNearDataServerProvider::mainnet(),
+        NeardataServerProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(118_091_724..=118_091_729),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -129,7 +129,7 @@ async fn detects_pot_donations() {
 
     run_indexer(
         &mut indexer,
-        FastNearDataServerProvider::mainnet(),
+        NeardataServerProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(118_159_852..=118_159_854),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -201,7 +201,7 @@ async fn detects_direct_donations() {
 
     run_indexer(
         &mut indexer,
-        FastNearDataServerProvider::mainnet(),
+        NeardataServerProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(118_100_096..=118_100_103),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
