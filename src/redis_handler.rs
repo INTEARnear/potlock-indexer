@@ -21,14 +21,12 @@ pub struct PushToRedisStream {
 impl PushToRedisStream {
     pub async fn new(connection: ConnectionManager, max_stream_size: usize) -> Self {
         Self {
-            donation_stream: RedisEventStream::new(connection.clone(), "potlock_donation").await,
+            donation_stream: RedisEventStream::new(connection.clone(), "potlock_donation"),
             pot_project_donation_stream: RedisEventStream::new(
                 connection.clone(),
                 "potlock_pot_project_donation",
-            )
-            .await,
-            pot_donation_stream: RedisEventStream::new(connection.clone(), "potlock_pot_donation")
-                .await,
+            ),
+            pot_donation_stream: RedisEventStream::new(connection.clone(), "potlock_pot_donation"),
             max_stream_size,
         }
     }
@@ -59,7 +57,6 @@ impl PotlockEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
-            .await
             .expect("Failed to emit donation event");
     }
 
@@ -93,7 +90,6 @@ impl PotlockEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
-            .await
             .expect("Failed to emit pot project donation event");
     }
 
@@ -122,7 +118,6 @@ impl PotlockEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
-            .await
             .expect("Failed to emit pot donation event");
     }
 }
