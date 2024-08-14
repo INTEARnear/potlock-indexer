@@ -57,6 +57,7 @@ impl PotlockEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
+            .await
             .expect("Failed to emit donation event");
     }
 
@@ -90,6 +91,7 @@ impl PotlockEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
+            .await
             .expect("Failed to emit pot project donation event");
     }
 
@@ -118,6 +120,7 @@ impl PotlockEventHandler for PushToRedisStream {
                 },
                 self.max_stream_size,
             )
+            .await
             .expect("Failed to emit pot donation event");
     }
 }
