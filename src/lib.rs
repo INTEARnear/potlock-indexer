@@ -31,6 +31,9 @@ pub trait PotlockEventHandler: Send + Sync {
         context: EventContext,
     );
     async fn handle_pot_donation(&mut self, event: PotDonationEvent, context: EventContext);
+
+    /// Called after each block
+    async fn flush_events(&mut self, block_height: BlockHeight);
 }
 
 pub struct PotlockIndexer<T: PotlockEventHandler>(pub T);
@@ -170,6 +173,11 @@ impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
             }
         }
 
+        Ok(())
+    }
+
+    async fn process_block_end(&mut self, block: &StreamerMessage) -> Result<(), Self::Error> {
+        self.0.flush_events(block.block.header.height).await;
         Ok(())
     }
 }

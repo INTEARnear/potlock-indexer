@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use inindexer::{
-    near_indexer_primitives::types::AccountId, neardata_server::NeardataServerProvider,
+    near_indexer_primitives::types::{AccountId, BlockHeight},
+    neardata::NeardataProvider,
     run_indexer, BlockIterator, IndexerOptions, PreprocessTransactionsSettings,
 };
 
@@ -33,6 +34,8 @@ async fn detects_pot_project_donations() {
         async fn handle_pot_donation(&mut self, _event: PotDonationEvent, _context: EventContext) {}
 
         async fn handle_donation(&mut self, _event: DonationEvent, _context: EventContext) {}
+
+        async fn flush_events(&mut self, _block_height: BlockHeight) {}
     }
 
     let handler = TestHandler {
@@ -43,7 +46,7 @@ async fn detects_pot_project_donations() {
 
     run_indexer(
         &mut indexer,
-        NeardataServerProvider::mainnet(),
+        NeardataProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(118_091_724..=118_091_729),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -68,11 +71,7 @@ async fn detects_pot_project_donations() {
                 pot_id: "oss.v1.potfactory.potlock.near".parse().unwrap(),
                 donor_id: "slimedragon.near".parse().unwrap(),
                 total_amount: 100000000000000000000000,
-                net_amount: if cfg!(feature = "net-amount-fix") {
-                    90990000000000000000000
-                } else {
-                    0
-                },
+                net_amount: 0,
                 message: None,
                 donated_at: 1714655073614,
                 project_id: "nearcatalog.near".parse().unwrap(),
@@ -119,6 +118,8 @@ async fn detects_pot_donations() {
         }
 
         async fn handle_donation(&mut self, _event: DonationEvent, _context: EventContext) {}
+
+        async fn flush_events(&mut self, _block_height: BlockHeight) {}
     }
 
     let handler = TestHandler {
@@ -129,7 +130,7 @@ async fn detects_pot_donations() {
 
     run_indexer(
         &mut indexer,
-        NeardataServerProvider::mainnet(),
+        NeardataProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(118_159_852..=118_159_854),
             preprocess_transactions: Some(PreprocessTransactionsSettings {
@@ -154,7 +155,7 @@ async fn detects_pot_donations() {
                 pot_id: "oss.v1.potfactory.potlock.near".parse().unwrap(),
                 donor_id: "slimedragon.near".parse().unwrap(),
                 total_amount: 10000000000000000000000,
-                net_amount: if cfg!(feature = "net-amount-fix") { 3790000000000000000000 } else { 0 },
+                net_amount: 0,
                 message: Some("Testing gh/INTEARnear/potlock-indexer because it's hard to find existing transactions to test on".to_owned()),
                 donated_at: 1714741415342, referrer_id: None, referrer_fee: None, protocol_fee: 0, chef_id: None, chef_fee: None
             },
@@ -191,6 +192,8 @@ async fn detects_direct_donations() {
                 .or_default()
                 .push((event, context));
         }
+
+        async fn flush_events(&mut self, _block_height: BlockHeight) {}
     }
 
     let handler = TestHandler {
@@ -201,7 +204,7 @@ async fn detects_direct_donations() {
 
     run_indexer(
         &mut indexer,
-        NeardataServerProvider::mainnet(),
+        NeardataProvider::mainnet(),
         IndexerOptions {
             range: BlockIterator::iterator(118_100_096..=118_100_103),
             preprocess_transactions: Some(PreprocessTransactionsSettings {

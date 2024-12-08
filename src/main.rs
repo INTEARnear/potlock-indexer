@@ -1,4 +1,4 @@
-use inindexer::neardata_server::NeardataServerProvider;
+use inindexer::neardata::NeardataProvider;
 
 use inindexer::{
     run_indexer, AutoContinue, BlockIterator, IndexerOptions, PreprocessTransactionsSettings,
@@ -26,7 +26,7 @@ async fn main() {
 
     run_indexer(
         &mut indexer,
-        NeardataServerProvider::mainnet(),
+        NeardataProvider::mainnet(),
         IndexerOptions {
             range: if std::env::args().len() > 1 {
                 // For debugging
