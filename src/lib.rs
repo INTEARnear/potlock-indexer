@@ -4,7 +4,6 @@ mod tests;
 
 use async_trait::async_trait;
 use inindexer::near_indexer_primitives::types::AccountId;
-use inindexer::near_indexer_primitives::types::Balance;
 use inindexer::near_indexer_primitives::types::BlockHeight;
 use inindexer::near_indexer_primitives::views::ActionView;
 use inindexer::near_indexer_primitives::views::ExecutionStatusView;
@@ -13,6 +12,7 @@ use inindexer::near_indexer_primitives::CryptoHash;
 use inindexer::near_indexer_primitives::StreamerMessage;
 use inindexer::near_utils::dec_format;
 use inindexer::near_utils::EventLogData;
+use inindexer::near_utils::FtBalance;
 use inindexer::Indexer;
 use inindexer::TransactionReceipt;
 use inindexer::{CompleteTransaction, IncompleteTransaction};
@@ -196,7 +196,7 @@ pub struct DonationExternal {
     pub donor_id: AccountId,
     /// Amount donated
     #[serde(with = "dec_format")]
-    pub total_amount: Balance,
+    pub total_amount: FtBalance,
     /// FT id (e.g. "near")
     pub ft_id: AccountId,
     /// Optional message from the donor
@@ -207,12 +207,12 @@ pub struct DonationExternal {
     pub recipient_id: AccountId,
     /// Protocol fee
     #[serde(with = "dec_format")]
-    pub protocol_fee: Balance,
+    pub protocol_fee: FtBalance,
     /// Referrer ID
     pub referrer_id: Option<AccountId>,
     /// Referrer fee
     #[serde(with = "dec_format")]
-    pub referrer_fee: Option<Balance>,
+    pub referrer_fee: Option<FtBalance>,
 }
 
 /// https://github.com/PotLock/core/blob/cda438fd3f7a0aea06a4e435d7ecebfeb6e172a5/contracts/pot/src/donations.rs#L51
@@ -224,10 +224,10 @@ pub struct PotDonationExternal {
     pub donor_id: AccountId,
     /// Amount donated
     #[serde(with = "dec_format")]
-    pub total_amount: Balance,
+    pub total_amount: FtBalance,
     /// Amount after all fees/expenses (incl. storage)
     #[serde(with = "dec_format")]
-    pub net_amount: Balance,
+    pub net_amount: FtBalance,
     /// Optional message from the donor
     pub message: Option<String>,
     /// Timestamp when the donation was made
@@ -238,10 +238,10 @@ pub struct PotDonationExternal {
     pub referrer_id: Option<AccountId>,
     /// Referrer fee
     #[serde(with = "dec_format")]
-    pub referrer_fee: Option<Balance>,
+    pub referrer_fee: Option<FtBalance>,
     /// Protocol fee
     #[serde(with = "dec_format")]
-    pub protocol_fee: Balance,
+    pub protocol_fee: FtBalance,
     /// Indicates whether this is matching pool donation
     pub matching_pool: bool,
     /// Chef ID
@@ -258,7 +258,7 @@ pub struct DonationEvent {
     /// ID of the donor
     pub donor_id: AccountId,
     /// Amount donated
-    pub total_amount: Balance,
+    pub total_amount: FtBalance,
     /// FT id (e.g. "near")
     pub ft_id: AccountId,
     /// Optional message from the donor
@@ -268,11 +268,11 @@ pub struct DonationEvent {
     /// ID of the project receiving the donation
     pub project_id: AccountId,
     /// Protocol fee
-    pub protocol_fee: Balance,
+    pub protocol_fee: FtBalance,
     /// Referrer ID
     pub referrer_id: Option<AccountId>,
     /// Referrer fee
-    pub referrer_fee: Option<Balance>,
+    pub referrer_fee: Option<FtBalance>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -284,9 +284,9 @@ pub struct PotProjectDonationEvent {
     /// ID of the donor
     pub donor_id: AccountId,
     /// Amount donated
-    pub total_amount: Balance,
+    pub total_amount: FtBalance,
     /// Amount after all fees/expenses (incl. storage)
-    pub net_amount: Balance,
+    pub net_amount: FtBalance,
     /// Optional message from the donor
     pub message: Option<String>,
     /// Timestamp when the donation was made
@@ -296,13 +296,13 @@ pub struct PotProjectDonationEvent {
     /// Referrer ID
     pub referrer_id: Option<AccountId>,
     /// Referrer fee
-    pub referrer_fee: Option<Balance>,
+    pub referrer_fee: Option<FtBalance>,
     /// Protocol fee
-    pub protocol_fee: Balance,
+    pub protocol_fee: FtBalance,
     /// Chef ID
     pub chef_id: Option<AccountId>,
     /// Chef fee
-    pub chef_fee: Option<Balance>,
+    pub chef_fee: Option<FtBalance>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -314,9 +314,9 @@ pub struct PotDonationEvent {
     /// ID of the donor
     pub donor_id: AccountId,
     /// Amount donated
-    pub total_amount: Balance,
+    pub total_amount: FtBalance,
     /// Amount after all fees/expenses (incl. storage)
-    pub net_amount: Balance,
+    pub net_amount: FtBalance,
     /// Optional message from the donor
     pub message: Option<String>,
     /// Timestamp when the donation was made
@@ -324,13 +324,13 @@ pub struct PotDonationEvent {
     /// Referrer ID
     pub referrer_id: Option<AccountId>,
     /// Referrer fee
-    pub referrer_fee: Option<Balance>,
+    pub referrer_fee: Option<FtBalance>,
     /// Protocol fee
-    pub protocol_fee: Balance,
+    pub protocol_fee: FtBalance,
     /// Chef ID
     pub chef_id: Option<AccountId>,
     /// Chef fee
-    pub chef_fee: Option<Balance>,
+    pub chef_fee: Option<FtBalance>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
