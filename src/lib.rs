@@ -9,13 +9,12 @@ use inindexer::near_indexer_primitives::views::ActionView;
 use inindexer::near_indexer_primitives::views::ExecutionStatusView;
 use inindexer::near_indexer_primitives::views::ReceiptEnumView;
 use inindexer::near_indexer_primitives::CryptoHash;
-use inindexer::near_indexer_primitives::StreamerMessage;
 use inindexer::near_utils::dec_format;
 use inindexer::near_utils::EventLogData;
 use inindexer::near_utils::FtBalance;
+use inindexer::transaction_trees::{ExecutedReceipt, TransactionTree};
 use inindexer::Indexer;
-use inindexer::TransactionReceipt;
-use inindexer::{CompleteTransaction, IncompleteTransaction};
+use inindexer::{IndexerExecutionOutcomeWithReceipt, StreamerMessage};
 use serde::Deserialize;
 
 pub type DonationId = u64;
@@ -42,9 +41,9 @@ pub struct PotlockIndexer<T: PotlockEventHandler>(pub T);
 impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
     type Error = anyhow::Error;
 
-    async fn on_transaction(
+    async fn process_transaction(
         &mut self,
-        tx: &CompleteTransaction,
+        tx: &TransactionTree,
         block: &StreamerMessage,
     ) -> Result<(), Self::Error> {
         for receipt in tx.receipts.iter() {
@@ -80,13 +79,7 @@ impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
                                             donor_id: donation.donor_id,
                                             total_amount: donation.total_amount,
                                             net_amount: donation.net_amount,
-                                            message: donation.message.and_then(|msg| {
-                                                if msg.is_empty() {
-                                                    None
-                                                } else {
-                                                    Some(msg)
-                                                }
-                                            }),
+                                            message: donation.message.filter(|msg| !msg.is_empty()),
                                             donated_at: donation.donated_at,
                                             project_id,
                                             referrer_id: donation.referrer_id,
@@ -103,13 +96,7 @@ impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
                                             donor_id: donation.donor_id,
                                             total_amount: donation.total_amount,
                                             net_amount: donation.net_amount,
-                                            message: donation.message.and_then(|msg| {
-                                                if msg.is_empty() {
-                                                    None
-                                                } else {
-                                                    Some(msg)
-                                                }
-                                            }),
+                                            message: donation.message.filter(|msg| !msg.is_empty()),
                                             donated_at: donation.donated_at,
                                             referrer_id: donation.referrer_id,
                                             referrer_fee: donation.referrer_fee,
@@ -130,12 +117,15 @@ impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
         Ok(())
     }
 
-    async fn on_receipt(
+    async fn process_receipt(
         &mut self,
-        receipt: &TransactionReceipt,
-        tx: &IncompleteTransaction,
+        receipt: &IndexerExecutionOutcomeWithReceipt,
+        tx: &TransactionTree,
         _block: &StreamerMessage,
     ) -> Result<(), Self::Error> {
+        let receipt = tx
+            .receipt(&receipt.receipt.receipt_id)
+            .expect("The tree has the receipts of the block it comes with");
         if receipt.receipt.receipt.receiver_id == "donate.potlock.near" {
             for log in receipt.receipt.execution_outcome.outcome.logs.iter() {
                 if let Ok(log) = EventLogData::<Vec<DonationLogWrapper>>::deserialize(log) {
@@ -147,13 +137,7 @@ impl<T: PotlockEventHandler + 'static> Indexer for PotlockIndexer<T> {
                                 donor_id: donation.donor_id,
                                 total_amount: donation.total_amount,
                                 ft_id: donation.ft_id,
-                                message: donation.message.and_then(|msg| {
-                                    if msg.is_empty() {
-                                        None
-                                    } else {
-                                        Some(msg)
-                                    }
-                                }),
+                                message: donation.message.filter(|msg| !msg.is_empty()),
                                 donated_at: donation.donated_at_ms,
                                 project_id: donation.recipient_id,
                                 protocol_fee: donation.protocol_fee,
@@ -343,18 +327,12 @@ pub struct EventContext {
     pub block_timestamp_nanosec: u128,
 }
 
-fn get_result<'a>(
-    receipt: &'a TransactionReceipt,
-    tx: &'a CompleteTransaction,
-) -> Option<&'a Vec<u8>> {
+fn get_result<'a>(receipt: &'a ExecutedReceipt, tx: &'a TransactionTree) -> Option<&'a Vec<u8>> {
     match &receipt.receipt.execution_outcome.outcome.status {
         ExecutionStatusView::Failure(_) | ExecutionStatusView::Unknown => None,
-        ExecutionStatusView::SuccessReceiptId(receipt_id) => get_result(
-            tx.receipts
-                .iter()
-                .find(|r| r.receipt.receipt.receipt_id == *receipt_id)?,
-            tx,
-        ),
+        ExecutionStatusView::SuccessReceiptId(receipt_id) => {
+            get_result(tx.receipt(receipt_id)?, tx)
+        }
         ExecutionStatusView::SuccessValue(value) => Some(value),
     }
 }

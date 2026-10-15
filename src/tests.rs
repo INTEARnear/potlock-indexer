@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use inindexer::{
     near_indexer_primitives::types::{AccountId, BlockHeight},
     neardata::NeardataProvider,
-    run_indexer, BlockRange, IndexerOptions, PreprocessTransactionsSettings,
+    run_indexer, BlockRange, IndexerOptions,
 };
 
 use crate::{
@@ -48,10 +48,7 @@ async fn detects_pot_project_donations() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            preprocess_transactions: Some(PreprocessTransactionsSettings {
-                prefetch_blocks: 0,
-                postfetch_blocks: 0,
-            }),
+            warm_up_blocks: 50,
             ..IndexerOptions::default_with_range(BlockRange::Range {
                 start_inclusive: 118_091_724,
                 end_exclusive: Some(118_091_730),
@@ -134,10 +131,7 @@ async fn detects_pot_donations() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            preprocess_transactions: Some(PreprocessTransactionsSettings {
-                prefetch_blocks: 0,
-                postfetch_blocks: 0,
-            }),
+            warm_up_blocks: 50,
             ..IndexerOptions::default_with_range(BlockRange::Range {
                 start_inclusive: 118_159_852,
                 end_exclusive: Some(118_159_855),
@@ -210,10 +204,7 @@ async fn detects_direct_donations() {
         &mut indexer,
         NeardataProvider::mainnet(),
         IndexerOptions {
-            preprocess_transactions: Some(PreprocessTransactionsSettings {
-                prefetch_blocks: 0,
-                postfetch_blocks: 0,
-            }),
+            warm_up_blocks: 50,
             ..IndexerOptions::default_with_range(BlockRange::Range {
                 start_inclusive: 118_100_096,
                 end_exclusive: Some(118_100_103),
